@@ -15,13 +15,13 @@ const createOrderIntoDB = async (payload: TOrder) => {
     if (!findProduct) {
       throw new AppError(
         httpStatus.NOT_FOUND,
-        `Product with ${productId} not found`
+        `Product with ${productId} is not found`
       );
     }
     if (findProduct.quantity < quantity) {
       throw new AppError(
         httpStatus.BAD_REQUEST,
-        `Insufficient quantity for product ${findProduct.title}`
+        `Insufficient quantity for the product ${findProduct.title}`
       );
     }
     // Create the order
