@@ -44,9 +44,11 @@ Instructions on how to install, configure, and get the project running locally.
 2. Add necessary configuration variables in the `.env` file.
    Example:
    ```bash
-    PORT=3000
-    DB_URL=your_db_connection_uri
-    API_KEY=your_api_key_here
+    PORT=5000
+    DATABASE_URL= your_database_uri
+    BCRYPT_SALT_ROUNDS=10
+    JWT_ACCESS_SECRET=your_access_token
+    JWT_ACCESS_EXPIRES_IN=1h
    ```
 3. Explain any specific configuration requirements or variables used in your project.
 
