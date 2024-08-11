@@ -16,6 +16,7 @@ const OrderSchema = new Schema<TOrder>({
   },
   name: { type: String, required: true },
   email: { type: String, required: true },
+  userImage: { type: String, required: false },
   TotalPrice: { type: Number, required: true },
   phoneNumber: { type: String, required: true },
   company: { type: String, required: true },

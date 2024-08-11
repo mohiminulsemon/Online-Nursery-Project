@@ -10,6 +10,10 @@ const CategorySchema = new Schema<TCategory>({
     type: String,
     required: [true, "Category description Required"],
   },
+  imageUrl: {
+    type: String,
+    required: [true, "Category image Required"],
+  },
 });
 
 export const Category = model<TCategory>("Category", CategorySchema);

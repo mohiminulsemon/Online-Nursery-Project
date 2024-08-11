@@ -8,6 +8,7 @@ export type TOrder = {
   }[];
   name: string;
   email: string;
+  userImage: string;
   phoneNumber: string;
   company: string;
   address: string;
