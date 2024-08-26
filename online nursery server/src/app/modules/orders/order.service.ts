@@ -3,41 +3,89 @@ import { Product } from "../products/product.model";
 import { TOrder } from "./order.interface";
 import { Order } from "./order.model";
 import AppError from "../../errors/AppError";
+import mongoose from "mongoose";
+
+// const createOrderIntoDB = async (payload: TOrder) => {
+//   const { productItem, ...orderDetails } = payload;
+
+//   for (const item of productItem) {
+//     const { _id: productId, quantity } = item;
+
+//     // Fetch the product 
+//     const findProduct = await Product.findById(productId);
+//     if (!findProduct) {
+//       throw new AppError(
+//         httpStatus.NOT_FOUND,
+//         `Product with ${productId} is not found`
+//       );
+//     }
+//     if (findProduct.quantity < quantity) {
+//       throw new AppError(
+//         httpStatus.BAD_REQUEST,
+//         `Insufficient quantity for the product ${findProduct.title}`
+//       );
+//     }
+//     // Create the order
+//     const createOrder = new Order(payload);
+//     await createOrder.save();
+
+//     // Update the  inventory
+//     findProduct.quantity -= quantity;
+//     findProduct.inStock = findProduct.quantity > 0;
+//     await findProduct.save();
+//   }
+//   const createOrder = new Order({ ...orderDetails, productItem });
+//   await createOrder.save();
+
+//   return createOrder;
+// };
 
 const createOrderIntoDB = async (payload: TOrder) => {
   const { productItem, ...orderDetails } = payload;
 
-  for (const item of productItem) {
-    const { _id: productId, quantity } = item;
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    // Fetch the product 
-    const findProduct = await Product.findById(productId);
-    if (!findProduct) {
-      throw new AppError(
-        httpStatus.NOT_FOUND,
-        `Product with ${productId} is not found`
-      );
+  try {
+    for (const item of productItem) {
+      const { _id: productId, quantity } = item;
+
+      // Fetch the product
+      const findProduct = await Product.findById(productId).session(session);
+      if (!findProduct) {
+        throw new AppError(
+          httpStatus.NOT_FOUND,
+          `Product with ${productId} is not found`
+        );
+      }
+      if (findProduct.quantity < quantity) {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          `Insufficient quantity for the product ${findProduct.title}`
+        );
+      }
+
+      // Update the inventory
+      findProduct.quantity -= quantity;
+      findProduct.inStock = findProduct.quantity > 0;
+      await findProduct.save({ session });
     }
-    if (findProduct.quantity < quantity) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        `Insufficient quantity for the product ${findProduct.title}`
-      );
-    }
+
     // Create the order
-    const createOrder = new Order(payload);
-    await createOrder.save();
+    const createOrder = new Order({ ...orderDetails, productItem });
+    await createOrder.save({ session });
 
-    // Update the  inventory
-    findProduct.quantity -= quantity;
-    findProduct.inStock = findProduct.quantity > 0;
-    await findProduct.save();
+    await session.commitTransaction();
+    session.endSession();
+
+    return createOrder;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
-  const createOrder = new Order({ ...orderDetails, productItem });
-  await createOrder.save();
-
-  return createOrder;
 };
+
 
 // get all orders
 const getAllOrdersFromDB = async () => {
