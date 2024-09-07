@@ -5,57 +5,19 @@ import { Order } from "./order.model";
 import AppError from "../../errors/AppError";
 import mongoose from "mongoose";
 
-// const createOrderIntoDB = async (payload: TOrder) => {
-//   const { productItem, ...orderDetails } = payload;
-
-//   for (const item of productItem) {
-//     const { _id: productId, quantity } = item;
-
-//     // Fetch the product 
-//     const findProduct = await Product.findById(productId);
-//     if (!findProduct) {
-//       throw new AppError(
-//         httpStatus.NOT_FOUND,
-//         `Product with ${productId} is not found`
-//       );
-//     }
-//     if (findProduct.quantity < quantity) {
-//       throw new AppError(
-//         httpStatus.BAD_REQUEST,
-//         `Insufficient quantity for the product ${findProduct.title}`
-//       );
-//     }
-//     // Create the order
-//     const createOrder = new Order(payload);
-//     await createOrder.save();
-
-//     // Update the  inventory
-//     findProduct.quantity -= quantity;
-//     findProduct.inStock = findProduct.quantity > 0;
-//     await findProduct.save();
-//   }
-//   const createOrder = new Order({ ...orderDetails, productItem });
-//   await createOrder.save();
-
-//   return createOrder;
-// };
-
 const createOrderIntoDB = async (payload: TOrder) => {
   const { productItem, ...orderDetails } = payload;
-
-  const session = await mongoose.startSession();
-  session.startTransaction();
 
   try {
     for (const item of productItem) {
       const { _id: productId, quantity } = item;
 
       // Fetch the product
-      const findProduct = await Product.findById(productId).session(session);
+      const findProduct = await Product.findById(productId);
       if (!findProduct) {
         throw new AppError(
           httpStatus.NOT_FOUND,
-          `Product with ${productId} is not found`
+          `Product with ID ${productId} is not found`
         );
       }
       if (findProduct.quantity < quantity) {
@@ -68,23 +30,24 @@ const createOrderIntoDB = async (payload: TOrder) => {
       // Update the inventory
       findProduct.quantity -= quantity;
       findProduct.inStock = findProduct.quantity > 0;
-      await findProduct.save({ session });
+      await findProduct.save();
+
+      console.log(`Updated inventory for product: ${findProduct.title}`);
     }
 
-    // Create the order
+    // Create and save the order
     const createOrder = new Order({ ...orderDetails, productItem });
-    await createOrder.save({ session });
+    await createOrder.save();
 
-    await session.commitTransaction();
-    session.endSession();
+    console.log("Order saved successfully");
 
     return createOrder;
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+    console.error("Error during order creation:", error);
     throw error;
   }
 };
+
 
 
 // get all orders

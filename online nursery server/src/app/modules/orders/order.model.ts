@@ -1,17 +1,17 @@
 import { model, Schema } from "mongoose";
 import { TOrder } from "./order.interface";
 
+const ProductItemSchema = new Schema({
+  _id: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+  quantity: { type: Number, required: true },
+  title: { type: String, required: true },
+  category: { type: String, required: true },
+  imageUrl: { type: String, required: true },
+});
+
 const OrderSchema = new Schema<TOrder>({
   productItem: {
-    type: [
-      {
-        _id: String,
-        quantity: Number,
-        title: String,
-        category: String,
-        imageUrl: String,
-      },
-    ],
+    type: [ProductItemSchema],
     required: true,
   },
   name: { type: String, required: true },
